@@ -1,0 +1,14 @@
+{
+    "name": "tls/sms",
+    "description": "pages and functions for SMS",
+    "type": "project",
+    "license": "All Rights Reserved",
+    "authors": [
+        {
+            "name": "Daniel Despain",
+            "email": "danield@teachingstuff.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
