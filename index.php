@@ -408,7 +408,7 @@ function maxOH(array $row, array $locationsList) : int {
 
 
 
-if($showDebug) echo "<p>done</p>";
+if($settings->showDebug) echo "<p>done</p>";
 
 ?>
 
