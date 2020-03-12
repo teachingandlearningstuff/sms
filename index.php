@@ -123,8 +123,6 @@ if($category == ""){
 	// everyone has sold at least 1
 	// order by company-wide total most sold
 	$query = "SELECT 
-	id, 
-	category, 
 	mergedForBalance.item, 
 	commonAttributes.title, 
 	commonAttributes.price, 
@@ -152,13 +150,13 @@ LIMIT $itemCount";
 		$debugTable .= "<table border='1' cellpadding='2' cellspacing='0'>";
 		$debugTable .= "<thead>";
 		$debugTable .= "<tr><th colspan='7'>" . number_format($rowCountTOP, 0) . " TOP Seller" . ($rowCountTOP != 1 ? "s" : "") . "</th></tr>";
-		$debugTable .= "<tr><th class='tdr'>id</th><th class='tdl'>item</th><th class='tdl'>Title</th><th class='tdr'>min/max OH</th><th class='tdr'>min/max SOLD</th><th class='tdr'>total sold</th><th class='tdr'>Price</th></tr>";
+		$debugTable .= "<tr><th class='tdl'>item</th><th class='tdl'>Title</th><th class='tdr'>min/max OH</th><th class='tdr'>min/max SOLD</th><th class='tdr'>total sold</th><th class='tdr'>Price</th></tr>";
 		$debugTable .= "</thead>";
 		while ($row = $result->fetch_assoc()) {
 			array_push($notIn, "'".$row['item']."'");
 			array_push($resultTOP, $row);
 			$debugTable .= "<tr>";
-			$debugTable .= "<td class='tdr'>" . $row['id'] . "</td><td>" . $row['item'] . "</td><td>" . $row['title'] . "</td>";
+			$debugTable .= "<td>" . $row['item'] . "</td><td>" . $row['title'] . "</td>";
 			$debugTable .= "<td>" . minOH($row, $locationsList) . "/" . maxOH($row, $locationsList) . "</td>";
 			$debugTable .= "<td>" . minSold($row, $locationsList) . "/" . maxSold($row, $locationsList) . "</td>";
 			$debugTable .= "<td class='tdr'>" . number_format($row['totalSold'], 0) . "</td><td class='tdr'>" . $row['price'] . "</td>";
@@ -181,8 +179,6 @@ LIMIT $itemCount";
 	$notInJoined = join(", ", $notIn);
 	$notInClause = (count($notIn) == 0 ? "" : "AND mergedForBalance.item NOT IN ($notInJoined)");
 	$query = "SELECT 
-	id, 
-	category, 
 	mergedForBalance.item, 
 	commonAttributes.title, 
 	commonAttributes.price, 
@@ -211,13 +207,13 @@ LIMIT $bottomCount";
 		$debugTable .= "<table border='1' cellpadding='2' cellspacing='0'>";
 		$debugTable .= "<thead>";
 		$debugTable .= "<tr><th colspan='7'>" . number_format($rowCountBOTTOM, 0) . " BOTTOM Seller" . ($rowCountBOTTOM != 1 ? "s" : "") . "</th></tr>";
-		$debugTable .= "<tr><th class='tdr'>id</th><th class='tdl'>item</th><th class='tdl'>Title</th><th class='tdr'>min/max OH</th><th class='tdr'>min/max SOLD</th><th class='tdr'>total sold</th><th class='tdr'>Price</th></tr>";
+		$debugTable .= "<tr><th class='tdl'>item</th><th class='tdl'>Title</th><th class='tdr'>min/max OH</th><th class='tdr'>min/max SOLD</th><th class='tdr'>total sold</th><th class='tdr'>Price</th></tr>";
 		$debugTable .= "</thead>";
 		while ($row = $result->fetch_assoc()) {
 			array_push($notIn, "'".$row['item']."'");
 			array_push($resultBOTTOM, $row);
 			$debugTable .= "<tr>";
-			$debugTable .= "<td>" . $row['id'] . "</td><td>" . $row['item'] . "</td><td>" . $row['title'] . "</td>";
+			$debugTable .= "<td>" . $row['item'] . "</td><td>" . $row['title'] . "</td>";
 			$debugTable .= "<td>" . minOH($row, $locationsList) . "/" . maxOH($row, $locationsList) . "</td>";
 			$debugTable .= "<td>" . minSold($row, $locationsList) . "/" . maxSold($row, $locationsList) . "</td>";
 			$debugTable .= "<td class='tdr'>" . number_format($row['totalSold'], 0) . "</td><td>" . $row['price'] . "</td>";
@@ -244,8 +240,6 @@ LIMIT $bottomCount";
 	$notInJoined = join(", ", $notIn);
 	$notInClause = (count($notIn) == 0 ? "" : "AND mergedForBalance.item NOT IN ($notInJoined)");
 	$query = "SELECT 
-	id, 
-	category, 
 	mergedForBalance.item, 
 	commonAttributes.title, 
 	commonAttributes.price, 
@@ -273,13 +267,13 @@ LIMIT $limit";
 		$debugTable .= "<table border='1' cellpadding='2' cellspacing='0'>";
 		$debugTable .= "<thead>";
 		$debugTable .= "<tr><th colspan='7'>" . number_format($rowCountFILLER, 0) . " FILLER Seller" . ($rowCountFILLER != 1 ? "s" : "") . "</th></tr>";
-		$debugTable .= "<tr><th class='tdr'>id</th><th class='tdl'>item</th><th class='tdl'>Title</th><th class='tdr'>min/max OH</th><th class='tdr'>min/max SOLD</th><th class='tdr'>total sold</th><th class='tdr'>Price</th></tr>";
+		$debugTable .= "<tr><th class='tdl'>item</th><th class='tdl'>Title</th><th class='tdr'>min/max OH</th><th class='tdr'>min/max SOLD</th><th class='tdr'>total sold</th><th class='tdr'>Price</th></tr>";
 		$debugTable .= "</thead>";
 		while ($row = $result->fetch_assoc()) {
 			array_push($notIn, "'".$row['item']."'");
 			array_push($resultFILLER, $row);
 			$debugTable .= "<tr>";
-			$debugTable .= "<td class='tdr'>" . $row['id'] . "</td><td>" . $row['item'] . "</td><td>" . $row['title'] . "</td>";
+			$debugTable .= "<td>" . $row['item'] . "</td><td>" . $row['title'] . "</td>";
 			$debugTable .= "<td>" . minOH($row, $locationsList) . "/" . maxOH($row, $locationsList) . "</td>";
 			$debugTable .= "<td>" . minSold($row, $locationsList) . "/" . maxSold($row, $locationsList) . "</td>";
 			$debugTable .= "<td class='tdr'>" . number_format($row['totalSold'], 0) . "</td><td class='tdr'>" . $row['price'] . "</td>";
