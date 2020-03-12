@@ -406,11 +406,11 @@ function maxOH(array $row, array $locationsList) : int {
 	return $max;
 }
 
+
+
+if($showDebug) echo "<p>done</p>";
+
 ?>
-
-
-
-<p>done</p>
 
 </article>
 </body>
