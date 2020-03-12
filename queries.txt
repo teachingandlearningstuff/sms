@@ -1,0 +1,125 @@
+Top Ten Page
+
+
+
+
+
+SELECT DISTINCT category FROM commonAttributes;
+
+SELECT DISTINCT subcategory FROM commonAttributes WHERE category = 'MATH';
+
+
+
+
+
+-- MOST POPULAR BY TOTAL SOLD
+-- everyone has > 2 on hand
+-- everyone has sold at least 1
+-- order by company-wide total most sold
+SELECT 
+	mergedForBalance.item, 
+	main_oh, bell_oh, tt06_oh, pv_oh, 
+	main_sold, bell_sold, tt06_sold, pv_sold, 
+	(main_sold + bell_sold + tt06_sold + pv_sold) AS totalSold, 
+	LEAST(main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd) AS oldestRcvd,
+	category, 
+	main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd
+FROM mergedForBalance 
+LEFT JOIN commonAttributes ON mergedForBalance.item = commonAttributes.item 
+WHERE 
+	commonAttributes.category = 'MATH' 
+	AND (main_oh > 2 AND bell_oh > 2 AND tt06_oh > 2 AND pv_oh > 2) 
+	AND (main_sold > 0 AND bell_sold > 0 AND tt06_sold > 0 AND pv_sold > 0) 
+ORDER BY 
+	(MAIN_sold + bell_sold + tt06_sold + pv_sold) DESC 
+LIMIT 10;
+
+
+
+-- LEAST POPULAR BY TOTAL SOLD
+-- everyone has > 2 on hand
+-- sold can be 0
+-- order by company-wide total least sold
+SELECT 
+	mergedForBalance.item, 
+	main_oh, bell_oh, tt06_oh, pv_oh, 
+	main_sold, bell_sold, tt06_sold, pv_sold, 
+	(main_sold + bell_sold + tt06_sold + pv_sold) AS totalSold, 
+	LEAST(main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd) AS oldestRcvd,
+	category, 
+	main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd
+FROM mergedForBalance 
+LEFT JOIN commonAttributes ON mergedForBalance.item = commonAttributes.item 
+WHERE 
+	commonAttributes.category = 'MATH' 
+	AND (main_oh > 2 AND bell_oh > 2 AND tt06_oh > 2 AND pv_oh > 2) 
+	AND (main_sold >= 0 AND bell_sold >= 0 AND tt06_sold >= 0 AND pv_sold >= 0) 
+	AND mergedForBalance.item 
+		NOT IN('T23006', 'IF656', 'T23004', 'T23040', 'FUN13708864')
+ORDER BY 
+	(MAIN_sold + bell_sold + tt06_sold + pv_sold) ASC 
+LIMIT 10;
+
+
+
+
+-- BROADEST SET OF ITEMS IN THIS CATEGORY
+-- everyone has > 2 on hand
+-- sold can be 0
+-- order by company-wide most on hand 
+-- 			company-wide most sold
+SELECT 
+	mergedForBalance.item, commonAttributes.title,
+	LEAST(main_oh, bell_oh, tt06_oh, pv_oh) AS smallestOH
+ FROM mergedForBalance 
+ LEFT JOIN commonAttributes ON mergedForBalance.item = commonAttributes.item 
+ WHERE 
+	commonAttributes.category = 'MATH' 
+	AND (main_oh > 1 AND bell_oh > 1 AND tt06_oh > 1 AND pv_oh > 1) 
+	AND mergedForBalance.item 
+		NOT IN ('T23006') 
+ ORDER BY 
+	smallestOH DESC, 
+	(MAIN_sold + bell_sold + tt06_sold + pv_sold) DESC
+ LIMIT 10;
+
+
+
+
+
+
+-- NEWEST ITEMS BY FIRST_RCVD
+-- everyone has > 2 on hand
+-- everyone has sold at least 1
+-- AS IS, THIS DOESN"T WORK because firstRcvd can often be 0 (incorrectly)
+-- REQUIRING all locations' sold > 0 tries to compensate, but then really limits result set
+SELECT 
+	mergedForBalance.item, 
+	main_oh, bell_oh, tt06_oh, pv_oh, 
+	main_sold, bell_sold, tt06_sold, pv_sold, 
+	(main_sold + bell_sold + tt06_sold + pv_sold) AS totalSold, 
+	LEAST(main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd) AS oldestRcvd,
+	category, 
+	main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd
+FROM mergedForBalance 
+LEFT JOIN commonAttributes ON mergedForBalance.item = commonAttributes.item 
+WHERE 
+	(main_oh > 2 AND bell_oh > 2 AND tt06_oh > 2 AND pv_oh > 2) 
+	AND commonAttributes.category = 'MATH' 
+	AND (main_sold > 0 AND bell_sold > 0 AND tt06_sold > 0 AND pv_sold > 0) 
+GROUP BY item 
+ORDER BY LEAST(main_firstRcvd, bell_firstRcvd, tt06_firstRcvd, pv_firstRcvd) DESC 
+LIMIT 100;
+
+
+
+-- trying to get "new" by saying if firstRcvd is 0 pretend like it was 1 year ago
+-- outer LEAST is because we want to use the oldest firstRcvd as the baseline
+-- otherwise "never at PV until last week" makes the product look new everywhere
+ORDER BY 
+	LEAST(
+		GREATEST(UNIX_TIMESTAMP() - (60 * 60 * 24 * 365), main_firstRcvd), 
+		GREATEST(UNIX_TIMESTAMP() - (60 * 60 * 24 * 365), bell_firstRcvd), 
+		GREATEST(UNIX_TIMESTAMP() - (60 * 60 * 24 * 365), tt06_firstRcvd), 
+		GREATEST(UNIX_TIMESTAMP() - (60 * 60 * 24 * 365), pv_firstRcvd) 
+	) DESC 
