@@ -1,10 +1,12 @@
 <?php
 
 /**
- * @package  TeachingAndLearningStuffBasicProject
+ * @package  TeachingAndLearningStuffSMS
  */
 
 namespace Inc;
+
+use Inc\Config;
 
 
 
@@ -26,9 +28,10 @@ Class Connections {
 	#########################
 	# Properties 			#
 	#########################
+	/** @var object $conn */
 	public $conn; // this is the connection to the database (or null if failed to connect)
 
-	public $showConnection = false;
+	public $showConnection = true;
 
 	// connection parameters are stored in connection strings on Azure
 	// or <VirtualHost> directive in localhost environment
@@ -36,6 +39,13 @@ Class Connections {
 	private $connStringName;
 	private $envString;
 	private $connString;
+	private $certPath; // optional Custom connection string CUSTOMCONNSTR_{connAppName}_CA-cert
+
+	private $myDatabase;
+	private $myHostName;
+	private $myUserName;
+	private $myPassword;
+	private $myDatabasePort;
 
 	
 	#########################
@@ -48,18 +58,25 @@ Class Connections {
 	function __construct(string $connAppName, string $connStringName){
 		$this->connAppName		= $connAppName;
 		$this->connStringName	= $connStringName;
+		
+		$config = new Config();
 
 		$this->envString	= $this->connAppName . "_" . $this->connStringName;
 		$this->connString	= getenv("MYSQLCONNSTR_" . $this->envString);
+		$this->certPath		= getenv("CUSTOMCONNSTR_" . $this->connAppName . "_" . "CA-cert"); // false if not found; string if found
+		
+		if($this->certPath){
+			$this->certPath = $config->siteRoot . preg_replace("/^\./", "", $this->certPath); // fully qualified file path instead of relative
+		}
 
 		if($this->connString){
 			// Parse to retrieve host, username, password and database.
-			$myDatabase = preg_replace("/^.*Database=(.+?);.*$/", "\\1", $this->connString);
-			$myHostName = preg_replace("/^.*Data Source=(.+?);.*$/", "\\1", $this->connString); // Data Source in Azure connection string
-			$myUserName = preg_replace("/^.*User Id=(.+?);.*$/", "\\1", $this->connString);
-			$myPassword = preg_replace("/^.*Password=(.+?)$/", "\\1", $this->connString);
+			$this->myDatabase = preg_replace("/^.*Database=(.+?);.*$/", "\\1", $this->connString);
+			$this->myHostName = preg_replace("/^.*Data Source=(.+?);.*$/", "\\1", $this->connString); // Data Source in Azure connection string
+			$this->myUserName = preg_replace("/^.*User Id=(.+?);.*$/", "\\1", $this->connString);
+			$this->myPassword = preg_replace("/^.*Password=(.+?)$/", "\\1", $this->connString);
+			$this->myDatabasePort = 3306;
 		
-			// $myPassword = "foo";
 			// NEVER
 			// show connection strings publicly!
 			$environment = getenv("APPSETTING_" . $this->connAppName . "_" . 'environment');
@@ -67,10 +84,8 @@ Class Connections {
 				$this->showConnection = true;
 			}
 			
-			
-			
 			/** OPEN CONNECTION TO DATABSE WITH MySQLi */
-			$this->conn = @$this->openConn($myHostName, $myUserName, $myPassword, $myDatabase);
+			$this->conn = @$this->openConn();
 		}else{
 			$this->conn = null;
 		}
@@ -82,19 +97,38 @@ Class Connections {
 	}
 
 
-	private function openConn(string $theHostName, string $theUserName, string $thePassword, string $theDatabase) : ?object {
-		//FIXME: adjust Connections class to use secure database connection, with OOP mysqli
+	private function openConn() : ?object {
 		
-		// $theHostName	= "localhost";
-		// $theUserName	= "user";
-		// $thePassword	= "pass";
-		// $theDatabase	= "basicdatabase";
-		$conn = new \MySQLi($theHostName, $theUserName, $thePassword, $theDatabase) or die("Connect failed:\n". $conn->error);
-	
-		// Check connection
-		if($conn->connect_error){
+		$link = null; // SSL connection will set link to true (success) or false (failure)
+
+		if($this->certPath){
+			// SSL connection with certificate
+			// echo "<div class='hint'>SSL connection with certificate: " . $this->certPath . "</div>\n";
+
+			// $this->myHostName = "teachingstuff-internalmysql.mysql.database.azure.com";
+			// $this->myUserName = "tlsinternaladmin@teachingstuff-internalmysql";
+			// $this->myPassword = "9xnS8f7E!MvYH9WwSXXy@AKHqtFxTPF@gr#GegOa9@fHlNFw\$F" ;
+			// $this->myDatabase = "ssl_test";
+			// $this->certPath = realpath('./cert/BaltimoreCyberTrustRoot.crt.pem'); // older
+			// $this->certPath = realpath('./cert/DigiCertGlobalRootG2.crt.pem'); // newer
+			$conn = mysqli_init();
+			mysqli_ssl_set($conn, NULL, NULL, $this->certPath, NULL, NULL); // always returns true
+			$link = mysqli_real_connect($conn, $this->myHostName, $this->myUserName, $this->myPassword, $this->myDatabase, $this->myDatabasePort); // or die("Real Connect failed: #" . $conn->connect_errno . " -- " . $conn->connect_error);
+		}else{
+			// Non-SSL connection
+			// echo "<div class='redText hint'><strong>Non-SSL</strong> connection: no CA certificate</div>";
+
+			// $this->myHostName	= "localhost";
+			// $this->myUserName	= "user";
+			// $this->myPassword	= "pass";
+			// $this->myDatabase	= "basicdatabase";
+			$conn = new \MySQLi($this->myHostName, $this->myUserName, $this->myPassword, $this->myDatabase, $this->myDatabasePort) or die("Connect failed:\n". $conn->error);
+		}
+
+		// check connection
+		if($conn->connect_error || $link === false){
 			if($this->showConnection){
-				echo "<div class='debugOutput'>Failed to connect to MySQLi: " . $conn->connect_errno . " &mdash; " . $conn->connect_error . "</div>"; // dev: show reason
+				echo "<div class='debugOutput'>Failed to connect to MySQLi: #" . $conn->connect_errno . " &mdash; " . $conn->connect_error . "</div>"; // dev: show reason
 			}else{
 				echo "<div class='debugOutput'>Failed to connect.</div>"; // live: hide reason
 			}
@@ -106,7 +140,7 @@ Class Connections {
 
 	private function closeConn(){
 		if($this->conn){
-			$this->conn -> close();
+			$this->conn->close();
 		}
 	}
 	
