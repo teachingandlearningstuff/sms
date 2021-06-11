@@ -10,23 +10,17 @@
 <body>
 
 <?php
-//FIXME: Remove ERROR Display from production code!
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 // composer autoload
 require_once('./vendor/autoload.php');
 
-use Inc\Config      AS CONFIG;
-use Inc\Settings    AS SETTINGS;
-use Inc\Connections AS CONNECTIONS;
+use Inc\Settings;
+use API\Config\Database;
 
-$config     = new CONFIG(); // optionally send current-working-directory
-$settings   = new SETTINGS('sms', array('environment')); // list all desired environment variables
-$connection = new CONNECTIONS('sms', 'mysql-database'); // connection string to database is named 'basic-project_mysql-database'
-$conn       = $connection->conn;
+$settings = new Settings('sms', array('environment')); // list all desired environment variables
 
+$database = new Database();
+$conn = $database->getConn();
 
 
 // Try to show 10 top items for a category
@@ -75,7 +69,7 @@ if($category == ""){
 }else{
 	// dynamically get list of retail locations
 	$locationsList = array();
-	$query = "SELECT code FROM locations WHERE type IN ('retail') ORDER BY number ASC";
+	$query = "SELECT code FROM locations WHERE type IN ('retail') AND active = 1 ORDER BY number ASC";
 	// if($settings->showDebug) echo "<div class='debugOutput'><pre>$query</pre></div>";
 	if($result = $conn->query($query)){
 		$rowCount = $conn->affected_rows;
