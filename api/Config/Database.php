@@ -28,8 +28,8 @@ Class Database {
 	 * 
 	 * @return object database connection
 	 */
-	public function getConn(){
-		$this->connection	= new Connections('sms', 'mysql-database'); // looks for connection string named '{{app-name}}_{{connection-string}}'
+	public function getConn(string $appName='sms', string $stringName='mysql-database'){
+		$this->connection	= new Connections($appName, $stringName); // looks for connection string named '{{app-name}}_{{connection-string}}'
 		$this->conn			= $this->connection->conn;
 
 		return $this->conn;
