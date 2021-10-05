@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @package  TeachingAndLearningStuffSMS
+ * @package  TeachingAndLearningStuffBalanceTransfers
  */
 
 namespace Inc;
@@ -61,9 +61,28 @@ Class Connections {
 		
 		$config = new Config();
 
-		$this->envString	= $this->connAppName . "_" . $this->connStringName;
-		$this->connString	= getenv("MYSQLCONNSTR_" . $this->envString);
-		$this->certPath		= getenv("CUSTOMCONNSTR_" . $this->connAppName . "_" . "CA-cert"); // false if not found; string if found
+		$this->envString = $this->connAppName . "_" . $this->connStringName;
+		$cstr = getenv("MYSQLCONNSTR_" . $this->envString);
+		if($cstr){
+			$this->connString = $cstr;
+		}else{
+			// try looking for environment variable with underscores instead of dashes
+			$cstr = getenv("MYSQLCONNSTR_" . str_replace("-", "_", $this->envString));
+			if($cstr){
+				$this->connString = $cstr;
+			}
+		}
+		
+		$cpath = getenv("CUSTOMCONNSTR_" . $this->connAppName . "_" . "CA-cert"); // false if not found; string if found
+		if($cpath){
+			$this->certPath = $cpath;
+		}else{
+			// try looking for environment variable with underscores instead of dashes
+			$cpath = getenv("CUSTOMCONNSTR_" . str_replace("-", "_", $this->connAppName) . "_" . str_replace("-", "_", "CA-cert")); // false if not found; string if found
+			if($cpath){
+				$this->certPath = $cpath;
+			}
+		}
 		
 		if($this->certPath){
 			$this->certPath = $config->siteRoot . preg_replace("/^\./", "", $this->certPath); // fully qualified file path instead of relative
@@ -79,7 +98,23 @@ Class Connections {
 		
 			// NEVER
 			// show connection strings publicly!
-			$environment = getenv("APPSETTING_" . $this->connAppName . "_" . 'environment');
+			$env = getenv("APPSETTING_" . $this->connAppName . "_" . 'environment');
+			if($env){
+				$environment = $env;
+			}
+
+			// Apache may replace - (dash) with _ (underscore) in environment variable names, 
+			// so look for environment names with underscores if the above failed
+			// but build enVars with dashed array indexes
+			if(! $env){
+				$appUnderscore	= str_replace("-", "_", $this->connAppName);
+				$nUnderscore	= str_replace("-", "_", 'environment');
+				$env = getenv("APPSETTING_" . $appUnderscore . "_" . $nUnderscore);
+				if($env){
+					$environment = $env;
+				}
+			}
+
 			if($environment == 'local'){
 				$this->showConnection = true;
 			}
@@ -152,7 +187,7 @@ Class Connections {
 	#########################
 	# Methods				#
 	#########################
-	function showConnString() : string {
+	public function showConnString() : string {
 		if($this->showConnection == false){
 			return "";
 		}

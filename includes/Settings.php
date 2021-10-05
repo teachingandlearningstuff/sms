@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @package  TeachingAndLearningStuffBasicProject
+ * @package  TeachingAndLearningStuffBalanceTransfers
  */
 
 namespace Inc;
@@ -41,7 +41,25 @@ Class Settings {
 		// application settings are stored on Azure
 		$this->appName	= $appName;
 		foreach($settingsNames as $n){
-			$this->enVars[$n] = getenv("APPSETTING_" . $this->appName . "_" . $n);
+			// default null, and replace with actual value if found in environmental variables
+			$this->enVars[$n] = null;
+
+			$env = getenv("APPSETTING_" . $this->appName . "_" . $n);
+			if($env){
+				$this->enVars[$n] = $env;
+			}
+			
+			// Apache may replace - (dash) with _ (underscore) in environment variable names, 
+			// so look for environment names with underscores if the above failed
+			// but build enVars with dashed array indexes
+			if(! $env){
+				$appUnderscore	= str_replace("-", "_", $this->appName);
+				$nUnderscore	= str_replace("-", "_", $n);
+				$env = getenv("APPSETTING_" . $appUnderscore . "_" . $nUnderscore);
+				if($env){
+					$this->enVars[$n] = $env;
+				}
+			}
 		}
 
 		if($this->enVars['environment'] == "local" || $this->enVars['environment'] == "dev"){
