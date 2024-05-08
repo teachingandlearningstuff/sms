@@ -40,6 +40,8 @@ A **Web App Service** `teachingstuff-sms` and an associated dev slot were create
 
 The related `teachingstuff-sms` **Application Insights** resource has also been removed from Azure.
 
+> Azure App Name: **`teachingstuff-sms`**
+
 
 ### On GitHub
 
