@@ -144,8 +144,9 @@ Class Connections {
 			// $this->myUserName = "tlsinternaladmin@teachingstuff-internalmysql";
 			// $this->myPassword = "9xnS8f7E!MvYH9WwSXXy@AKHqtFxTPF@gr#GegOa9@fHlNFw\$F" ;
 			// $this->myDatabase = "ssl_test";
-			// $this->certPath = realpath('./cert/BaltimoreCyberTrustRoot.crt.pem'); // older
-			// $this->certPath = realpath('./cert/DigiCertGlobalRootG2.crt.pem'); // newer
+			// $this->certPath = realpath('./cert/BaltimoreCyberTrustRoot.crt.pem'); // oldest
+			// $this->certPath = realpath('./cert/DigiCertGlobalRootG2.crt.pem'); // older
+			// $this->certPath = realpath('./cert/DigiCertGlobalRootCA.crt.pem'); // newer
 			$conn = mysqli_init();
 			mysqli_ssl_set($conn, NULL, NULL, $this->certPath, NULL, NULL); // always returns true
 			$link = mysqli_real_connect($conn, $this->myHostName, $this->myUserName, $this->myPassword, $this->myDatabase, $this->myDatabasePort); // or die("Real Connect failed: #" . $conn->connect_errno . " -- " . $conn->connect_error);
